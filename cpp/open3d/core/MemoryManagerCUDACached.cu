@@ -94,6 +94,8 @@ public:
         if (instance_ == nullptr) {
             instance_ = std::make_shared<CUDACacher>();
         }
+        // static std::shared_ptr<CUDACacher> instance_ =
+        //         std::make_shared<CUDACacher>();
         return instance_;
     }
 
@@ -116,6 +118,8 @@ public:
     }
 
     ~CUDACacher() {
+        utility::LogInfo("At ~CUDACacher(), allocated_blocks_.size() == {}",
+                         allocated_blocks_.size());
         if (!allocated_blocks_.empty()) {
             // Should never reach here
             utility::LogError("[CUDACacher] Memory leak in destructor.");
@@ -124,6 +128,7 @@ public:
     }
 
     void* Malloc(size_t byte_size, const Device& device) {
+        utility::LogInfo("Malloc {}", byte_size);
         auto find_free_block = [&](BlockPtr query_block) -> BlockPtr {
             auto pool = get_pool(query_block->size_);
             auto it = pool->lower_bound(query_block);
@@ -172,10 +177,13 @@ public:
             allocated_blocks_.insert({ptr, found_block});
         }
 
+        utility::LogInfo("  > after Malloc, allocated_blocks_.size() == {}",
+                         allocated_blocks_.size());
         return ptr;
     }
 
     void Free(void* ptr, const Device& device) {
+        utility::LogInfo("Free {}", fmt::ptr(ptr));
         auto release_block = [&](BlockPtr block) {
             auto block_pool = get_pool(block->size_);
             auto it = block_pool->find(block);
@@ -255,6 +263,8 @@ public:
             block->in_use_ = false;
             get_pool(block->size_)->emplace(block);
         }
+        utility::LogInfo("  > after Free, allocated_blocks_.size() == {}",
+                         allocated_blocks_.size());
     }
 
     void ReleaseCache() {
