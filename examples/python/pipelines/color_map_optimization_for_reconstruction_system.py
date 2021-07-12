@@ -68,6 +68,7 @@ def main(config, keys):
             "The number of color images {} must equal to the number of depth images {}."
             .format(len(color_files), len(depth_files)))
 
+    # 相机轨迹？什么鬼？
     camera = o3d.io.read_pinhole_camera_trajectory(
         os.path.join(path, config["template_global_traj"]))
     if len(color_files) != len(camera.parameters):
